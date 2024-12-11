@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "811395577173",
+    "project_id": "netsbiz-64798",
+    "storage_bucket": "netsbiz-64798.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:811395577173:android:6a894f198f8bb2bd3eabdc",
+        "android_client_info": {
+          "package_name": "com.nets.netsbiz"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAH1SPrm9p9NTLTAtb-mVIiCFnYNcH4R0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
