@@ -1,75 +1,159 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import React, {useState, useEffect} from 'react';
-import {View, FlatList} from 'react-native';
-import {ActivityIndicator} from 'react-native-paper';
+import React, { useState, useEffect, useCallback, memo, useRef } from 'react';
+import { View, FlatList, ListRenderItem, RefreshControl, Text } from 'react-native';
+import { ActivityIndicator } from 'react-native-paper';
 import RenderItem from './RenderItem';
 
+interface Product {
+  id: number;
+  title: string;
+  price: number;
+  rating: number;
+  sku: string;
+}
+
+interface ApiResponse {
+  products: Product[];
+  total: number;
+  skip: number;
+  limit: number;
+}
+
+const MemoizedRenderItem = memo(RenderItem, (prevProps, nextProps) => prevProps.item.id === nextProps.item.id);
+
 export default function TransactionsList() {
-  const [data, setData] = useState<any[]>([]);
-  const [page, setPage] = useState<number>(0);
+  const [data, setData] = useState<Product[]>([]);
+  const [_page, setPage] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   const [hasMore, setHasMore] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [initialLoad, setInitialLoad] = useState<boolean>(true);
 
-  const fetchData = async (page: number) => {
-    if (loading || !hasMore) {
-      return;
-    }
-    setLoading(true);
+  const flatListRef = useRef<FlatList<Product>>(null);
+  const isLoadingRef = useRef<boolean>(false);
+
+  // Fetch data from the API
+  const fetchData = useCallback(async (pageNumber: number, isRefresh = false) => {
+    if (isLoadingRef.current) return;
+    if (!hasMore && !isRefresh) return;
+
     try {
+      isLoadingRef.current = true;
+      setLoading(true);
+      setError(null);
+
+      const skip = pageNumber * 20;
       const response = await fetch(
-        `https://dummyjson.com/products?limit=20&skip=${
-          page * 20
-        }&select=title,price,rating,sku,id`,
+        `https://dummyjson.com/products?limit=20&skip=${skip}&select=title,price,rating,sku,id`
       );
-      const result = await response.json();
-      if (result.products.length === 0) {
-        setHasMore(false);
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const result: ApiResponse = await response.json();
+
+      if (isRefresh) {
+        setData(result.products);
+        setInitialLoad(false); // Mark initial load as complete
       } else {
         setData(prevData => [...prevData, ...result.products]);
       }
-    } catch (error) {
-      console.error(error);
+
+      setHasMore(skip + result.products.length < result.total);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
+      setRefreshing(false);
+      isLoadingRef.current = false;
     }
-  };
+  }, [hasMore]);
 
-  const debounce = (func: (...args: any[]) => void, delay: number) => {
-    let timeoutId: NodeJS.Timeout;
-    return (...args: any[]) => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      timeoutId = setTimeout(() => {
-        func(...args);
-      }, delay);
-    };
-  };
-
+  // Initial load
   useEffect(() => {
-    fetchData(page);
-  }, [page]);
-
-  const renderItem = ({item}: any) => <RenderItem item={item} />;
-
-  const handleLoadMore = debounce(() => {
-    if (!loading && hasMore) {
-      setPage(prevPage => prevPage + 1);
+    if (initialLoad) {
+      fetchData(0, true);
     }
-  }, 500);
+  }, [fetchData, initialLoad]);
+
+  const handleLoadMore = useCallback(() => {
+    if (loading || !hasMore || isLoadingRef.current) {return;}
+
+    const nextPage = Math.floor(data.length / 20);
+    setPage(nextPage);
+    fetchData(nextPage, false);
+  }, [loading, hasMore, data.length, fetchData]);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    setPage(0);
+    setHasMore(true);
+    fetchData(0, true);
+  }, [fetchData]);
+
+  const renderItem: ListRenderItem<Product> = useCallback(
+    ({ item }) => <MemoizedRenderItem item={item} />,
+    []
+  );
+
+  const keyExtractor = useCallback((item: Product) => String(item.id), []);
+
+  const ListFooterComponent = useCallback(() => {
+    if (error) {
+      return (
+        <View className="pb-16">
+          <Text className="color-red-800">{error}</Text>
+        </View>
+      );
+    }
+    if (loading) {
+      return (
+        <View className="p-16">
+          <ActivityIndicator size="small" />
+        </View>
+      );
+    }
+    if (!hasMore && data.length > 0) {
+      return (
+        <View className="p-16 justify-center">
+          <Text>No more items to load</Text>
+        </View>
+      );
+    }
+    return null;
+  }, [loading, error, hasMore, data.length]);
+
+  const ListEmptyComponent = useCallback(() => {
+    if (loading && !refreshing) {return null;}
+    return (
+      <View className="flex-1 items-center justify-center pb-16">
+        <Text>No items found</Text>
+      </View>
+    );
+  }, [loading, refreshing]);
 
   return (
-    <View className="flex-1 items-center justify-center pb-2">
-      <FlatList
+    <View className="flex-1">
+      <FlatList<Product>
+        ref={flatListRef}
         data={data}
         renderItem={renderItem}
-        keyExtractor={(item, index) => index.toString()}
-        numColumns={1}
+        keyExtractor={keyExtractor}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          loading ? <ActivityIndicator size="large" color="#0000ff" /> : null
+        ListFooterComponent={ListFooterComponent}
+        ListEmptyComponent={ListEmptyComponent}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        initialNumToRender={10}
+        windowSize={21}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
+        className="flex-1 flex-grow pb-16"
+        decelerationRate={0.5}
       />
     </View>
   );

@@ -6,7 +6,7 @@ import {
   useCameraPermission,
   useCodeScanner,
 } from 'react-native-vision-camera';
-import {Icon, IconButton} from 'react-native-paper';
+import {IconButton} from 'react-native-paper';
 
 export default function QRScanner(props: any) {
   const {hasPermission, requestPermission} = useCameraPermission();
@@ -136,7 +136,7 @@ export default function QRScanner(props: any) {
               </View>
             )}
           </View>
-          <View className="flex-1 bg-cyan-100">
+          <View className="flex-1 bg-gray-300">
             <Text>Text</Text>
           </View>
         </>

@@ -3,21 +3,19 @@ import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
-import {Alert, Button, Image, StyleSheet, TouchableOpacity, TouchableWithoutFeedback} from 'react-native';
+import {Image, StyleSheet, TouchableOpacity} from 'react-native';
 import ScanQR from '../pages/ScanQR';
 import MaterialIcon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Settings from '../pages/Settings';
 import {useNavigation} from '@react-navigation/native';
 
 const Stack = createNativeStackNavigator();
 
-
 const ShopImage = () => {
   const navigation = useNavigation();
-
   return (
     <TouchableOpacity
       onPressIn={() => {
-        // Alert.alert('Store settings');
         navigation.navigate('Login');
       }}>
       <MaterialIcon name="store-settings" size={20} />
@@ -26,7 +24,6 @@ const ShopImage = () => {
 };
 
 export default function AppNavigation() {
-
   return (
     <Stack.Navigator
       initialRouteName="Home"
@@ -48,6 +45,7 @@ export default function AppNavigation() {
         }}
       />
       <Stack.Screen name="Scanqr" component={ScanQR} />
+      <Stack.Screen name="Settings" component={Settings} />
     </Stack.Navigator>
   );
 }

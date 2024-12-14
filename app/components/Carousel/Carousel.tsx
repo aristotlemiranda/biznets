@@ -21,7 +21,7 @@ export default function CarouselPage() {
   }, [currentIndex]);
 
   return (
-    <View className="flex-1">
+    <View className="h-[18%]">
       <Carousel
         ref={ref}
         width={width}
@@ -33,7 +33,7 @@ export default function CarouselPage() {
         onSnapToItem={index => setCurrentIndex(index)}
         renderItem={({item}) => (
           <TouchableOpacity
-            className="flex-1 items-center justify-center bg-blue-500 rounded-md m-2"
+            className="flex-1 items-center justify-center bg-blue-800"
             activeOpacity={1}
             onPress={() => {
               Alert.alert('Pressed', item.toString());
