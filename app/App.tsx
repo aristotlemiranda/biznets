@@ -44,7 +44,7 @@ function App(): React.JSX.Element {
       <GestureHandlerRootView>
         <PaperProvider theme={theme}>
           <SafeAreaProvider>
-            <SafeAreaView className="flex-1 bg-white">
+            <SafeAreaView className="flex-1 bg-gray-800">
               {/* <Login /> */}
               {/* <Home /> */}
               {/* <Stack.Navigator initialRouteName="Home">

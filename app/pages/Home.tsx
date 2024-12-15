@@ -7,7 +7,7 @@ import AppMenu from '../components/Menu/AppMenu'; // Ensure correct path to AppM
 
 export default function Home() {
   return (
-    <View className="flex-1">
+    <View className="flex-1 bg-gray-50">
       <TotalAmount />
       <CarouselPage />
       <AppMenu />

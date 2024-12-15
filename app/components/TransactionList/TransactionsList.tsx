@@ -1,7 +1,15 @@
-import React, { useState, useEffect, useCallback, memo, useRef } from 'react';
-import { View, FlatList, ListRenderItem, RefreshControl, Text } from 'react-native';
-import { ActivityIndicator } from 'react-native-paper';
+import React, {useState, useEffect, useCallback, memo, useRef} from 'react';
+import {
+  View,
+  FlatList,
+  ListRenderItem,
+  RefreshControl,
+  Text,
+  TouchableOpacity,
+} from 'react-native';
+import {ActivityIndicator} from 'react-native-paper';
 import RenderItem from './RenderItem';
+import MaterialIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface Product {
   id: number;
@@ -18,7 +26,10 @@ interface ApiResponse {
   limit: number;
 }
 
-const MemoizedRenderItem = memo(RenderItem, (prevProps, nextProps) => prevProps.item.id === nextProps.item.id);
+const MemoizedRenderItem = memo(
+  RenderItem,
+  (prevProps, nextProps) => prevProps.item.id === nextProps.item.id,
+);
 
 export default function TransactionsList() {
   const [data, setData] = useState<Product[]>([]);
@@ -33,42 +44,45 @@ export default function TransactionsList() {
   const isLoadingRef = useRef<boolean>(false);
 
   // Fetch data from the API
-  const fetchData = useCallback(async (pageNumber: number, isRefresh = false) => {
-    if (isLoadingRef.current) return;
-    if (!hasMore && !isRefresh) return;
+  const fetchData = useCallback(
+    async (pageNumber: number, isRefresh = false) => {
+      if (isLoadingRef.current) return;
+      if (!hasMore && !isRefresh) return;
 
-    try {
-      isLoadingRef.current = true;
-      setLoading(true);
-      setError(null);
+      try {
+        isLoadingRef.current = true;
+        setLoading(true);
+        setError(null);
 
-      const skip = pageNumber * 20;
-      const response = await fetch(
-        `https://dummyjson.com/products?limit=20&skip=${skip}&select=title,price,rating,sku,id`
-      );
+        const skip = pageNumber * 20;
+        const response = await fetch(
+          `https://dummyjson.com/products?limit=20&skip=${skip}&select=title,price,rating,sku,id`,
+        );
 
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const result: ApiResponse = await response.json();
+
+        if (isRefresh) {
+          setData(result.products);
+          setInitialLoad(false); // Mark initial load as complete
+        } else {
+          setData(prevData => [...prevData, ...result.products]);
+        }
+
+        setHasMore(skip + result.products.length < result.total);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+        isLoadingRef.current = false;
       }
-
-      const result: ApiResponse = await response.json();
-
-      if (isRefresh) {
-        setData(result.products);
-        setInitialLoad(false); // Mark initial load as complete
-      } else {
-        setData(prevData => [...prevData, ...result.products]);
-      }
-
-      setHasMore(skip + result.products.length < result.total);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-      isLoadingRef.current = false;
-    }
-  }, [hasMore]);
+    },
+    [hasMore],
+  );
 
   // Initial load
   useEffect(() => {
@@ -78,7 +92,9 @@ export default function TransactionsList() {
   }, [fetchData, initialLoad]);
 
   const handleLoadMore = useCallback(() => {
-    if (loading || !hasMore || isLoadingRef.current) {return;}
+    if (loading || !hasMore || isLoadingRef.current) {
+      return;
+    }
 
     const nextPage = Math.floor(data.length / 20);
     setPage(nextPage);
@@ -93,8 +109,8 @@ export default function TransactionsList() {
   }, [fetchData]);
 
   const renderItem: ListRenderItem<Product> = useCallback(
-    ({ item }) => <MemoizedRenderItem item={item} />,
-    []
+    ({item}) => <MemoizedRenderItem item={item} />,
+    [],
   );
 
   const keyExtractor = useCallback((item: Product) => String(item.id), []);
@@ -125,7 +141,9 @@ export default function TransactionsList() {
   }, [loading, error, hasMore, data.length]);
 
   const ListEmptyComponent = useCallback(() => {
-    if (loading && !refreshing) {return null;}
+    if (loading && !refreshing) {
+      return null;
+    }
     return (
       <View className="flex-1 items-center justify-center pb-16">
         <Text>No items found</Text>
@@ -133,8 +151,23 @@ export default function TransactionsList() {
     );
   }, [loading, refreshing]);
 
+  const scrollToTop = () => {
+    if (flatListRef.current) {
+      flatListRef.current.scrollToOffset({offset: 0, animated: true});
+    }
+  };
+
   return (
-    <View className="flex-1">
+    <View className="flex-1 border shadow-slate-50 border-gray-300">
+      <View className="flex-row justify-between items-center p-2 mr-2 ml-2">
+        <TouchableOpacity
+          onPress={scrollToTop}
+          className="flex-row items-center">
+          <Text className="text-lg font-bold mr-2">Transaction</Text>
+          <MaterialIcon name="arrow-up-bold-circle" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text className="text-lg font-bold">Amount</Text>
+      </View>
       <FlatList<Product>
         ref={flatListRef}
         data={data}
@@ -153,7 +186,7 @@ export default function TransactionsList() {
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
         className="flex-1 flex-grow pb-16"
-        decelerationRate={0.5}
+        decelerationRate={0.7}
       />
     </View>
   );
