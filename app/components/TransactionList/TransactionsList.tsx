@@ -58,7 +58,6 @@ export default function TransactionsList() {
         const response = await fetch(
           `https://dummyjson.com/products?limit=20&skip=${skip}&select=title,price,rating,sku,id`,
         );
-
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -106,6 +105,7 @@ export default function TransactionsList() {
     setPage(0);
     setHasMore(true);
     fetchData(0, true);
+    scrollToTop();
   }, [fetchData]);
 
   const renderItem: ListRenderItem<Product> = useCallback(
@@ -158,15 +158,26 @@ export default function TransactionsList() {
   };
 
   return (
-    <View className="flex-1 border shadow-slate-50 border-gray-300">
+    <View className="flex-1  shadow-gray-400 border-gray-300">
       <View className="flex-row justify-between items-center p-2 mr-2 ml-2">
-        <TouchableOpacity
-          onPress={scrollToTop}
-          className="flex-row items-center">
-          <Text className="text-lg font-bold mr-2">Transaction</Text>
-          <MaterialIcon name="arrow-up-bold-circle" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text className="text-lg font-bold">Amount</Text>
+        <View>
+          <Text className="text-lg font-bold mr-2">Transactions</Text>
+        </View>
+        <View className="flex-row items-center">
+          <TouchableOpacity className="p-2" onPress={handleRefresh}>
+            <MaterialIcon name="refresh" size={25} color="#05598d" />
+          </TouchableOpacity>
+          <View className="flex-row items-center">
+            <View className="h-5 w-[1px] bg-gray-500" />
+            <TouchableOpacity className="pl-2" onPress={scrollToTop}>
+              <MaterialIcon
+                name="arrow-up-bold-outline"
+                size={25}
+                color="#05598d"
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
       <FlatList<Product>
         ref={flatListRef}
@@ -186,7 +197,7 @@ export default function TransactionsList() {
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
         className="flex-1 flex-grow pb-16"
-        decelerationRate={0.7}
+        decelerationRate={0.8}
       />
     </View>
   );
