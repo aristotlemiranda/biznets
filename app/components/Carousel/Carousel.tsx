@@ -7,7 +7,7 @@ import MaterialIncons from 'react-native-vector-icons/MaterialCommunityIcons';
 const loremData = [
   {
     id: 0,
-    text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Excepteur vi.',
   },
   {
     id: 1,
@@ -72,7 +72,7 @@ export default function CarouselPage() {
   
             {/* Text content */}
             <View className="flex-1 pt-4 ml-8">
-              <Text className="text-base text-white text-left px-1">
+              <Text className="text-xl text-white text-left px-1">
                 {item.text}
               </Text>
             </View>
