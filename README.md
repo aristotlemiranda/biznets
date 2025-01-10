@@ -81,3 +81,5 @@ To learn more about React Native, take a look at the following resources:
 # Dependency check
 - npm-check -u 
 - depcheck
+
+#http://localhost:9000/api/sendsms/post?number=89510850&message=message 2
